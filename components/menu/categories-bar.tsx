@@ -75,6 +75,7 @@ export default function CategoriesBar({
       });
       setIsUpdating(false);
       if (categoryId === activeCategory) {
+        console.log("set to none");
         onSetActiveCategory("");
       }
     } catch (e) {
@@ -182,7 +183,6 @@ function CategoryItem({
   const inputRef = useRef<HTMLInputElement>(null);
   const [showForm, setShowForm] = useState(false);
   const isActive = activeCategory === id;
-
   const [updatedName, setUpdatedName] = useState(() => name);
 
   function updateHandler(e: SyntheticEvent) {
@@ -216,8 +216,10 @@ function CategoryItem({
 
   return (
     <div
-      className={`h-10 w-full rounded-lg bg-gray-50 flex items-center my-2 border-l-4 border-transparent pl-2 ${
-        isActive ? "border-blue-400" : "border-transparent"
+      className={`h-10 w-full rounded-lg bg-gray-50 flex items-center my-2 pl-2 ${
+        isActive
+          ? "border-l-4 border-blue-400"
+          : "border-l-4 border-transparent"
       }
     ${showForm ? "ring ring-blue-400" : ""} 
       `}
@@ -226,6 +228,7 @@ function CategoryItem({
       {!showForm ? (
         <>
           <div onClick={onSetActive} className="flex-1 truncate cursor-pointer">
+            {isActive}
             {name}
           </div>
 

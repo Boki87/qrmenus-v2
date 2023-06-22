@@ -11,7 +11,7 @@ interface DashboardNavProps {
 
 export default function DashboardNav({ user }: DashboardNavProps) {
   return (
-    <div className="border-b border-gray-200 bg-white">
+    <div className="border-b border-gray-200 bg-white fixed top-0 left-0 w-full z-20">
       <div className="navbar bg-white container mx-auto max-w-6xl px-4">
         <div className="mr-2">
           <Link href="/" className="">

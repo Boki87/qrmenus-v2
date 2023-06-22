@@ -31,6 +31,7 @@ export function MenuPage({ storeData }: MenuPageProps) {
         storeId={storeData.id}
         foods={foods}
         activeCategory={activeCategory}
+        currency={storeData.currency || "€"}
       />
     </div>
   );
