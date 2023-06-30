@@ -4,6 +4,9 @@ import ButtonGhost from "./ui/button-ghost";
 import ButtonOutline from "./ui/button-outline";
 import { usePathname } from "next/navigation";
 import { FaChevronLeft } from "react-icons/fa";
+import { GrView } from "react-icons/gr";
+import { BsFillPhoneFill } from "react-icons/bs";
+import { useStoreGlobalContext } from "@/context/StoreGlobalContext";
 
 interface StorePageNavProps {
   storeId: string;
@@ -12,6 +15,7 @@ interface StorePageNavProps {
 export default function StorePageNav({ storeId }: StorePageNavProps) {
   const pathname = usePathname();
   const isActive = (href: string) => pathname === href;
+  const { setShowPreview } = useStoreGlobalContext();
 
   return (
     <div className="flex space-x-2 mb-6">
@@ -30,6 +34,10 @@ export default function StorePageNav({ storeId }: StorePageNavProps) {
           Edit Menu
         </ButtonOutline>
       </Link>
+      <ButtonOutline onClick={() => setShowPreview(true)}>
+        Preview
+        <BsFillPhoneFill />
+      </ButtonOutline>
     </div>
   );
 }

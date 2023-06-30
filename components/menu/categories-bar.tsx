@@ -180,13 +180,13 @@ function CategoryItem({
   activeCategory,
   ...props
 }: CategoryItemProps) {
+  const submitBtn = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [showForm, setShowForm] = useState(false);
   const isActive = activeCategory === id;
   const [updatedName, setUpdatedName] = useState(() => name);
 
-  function updateHandler(e: SyntheticEvent) {
-    // e.preventDefault();
+  function updateHandler() {
     if (updatedName !== "") {
       onUpdate(updatedName);
     }
@@ -204,13 +204,23 @@ function CategoryItem({
     }
   }, []);
 
+  const listenForReturn = useCallback((e: KeyboardEvent) => {
+    if (e.code === "Enter" || e.key === "Enter") {
+      if (submitBtn.current) {
+        submitBtn.current.click();
+      }
+    }
+  }, []);
+
   useEffect(() => {
     if (showForm) {
       setUpdatedName(name);
       inputRef.current?.focus();
-      window.addEventListener("keyup", listenForEsc);
+      document.addEventListener("keyup", listenForEsc);
+      document.addEventListener("keyup", listenForReturn);
     } else {
-      window.removeEventListener("keyup", listenForEsc);
+      document.removeEventListener("keyup", listenForEsc);
+      document.removeEventListener("keyup", listenForReturn);
     }
   }, [showForm]);
 
@@ -257,6 +267,7 @@ function CategoryItem({
             className="join-item bg-transparent outline-none flex-1 px-1"
           />
           <button
+            ref={submitBtn}
             onClick={updateHandler}
             className="btn btn-sm join-item h-full"
             type="submit"

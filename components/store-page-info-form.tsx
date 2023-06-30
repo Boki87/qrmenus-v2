@@ -1,21 +1,38 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { Store, Food, FoodCategory } from "@prisma/client";
-import { FormEvent, SyntheticEvent, useState } from "react";
+import {
+  FormEvent,
+  SyntheticEvent,
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+} from "react";
 import ButtonOutline from "./ui/button-outline";
 import InputGroup from "./ui/input-group";
 import TextareaGroup from "./textarea-group";
+import useCurrency from "@/lib/useCurrency";
+import { MdFastfood } from "react-icons/md";
+import UploadWidget from "./UploadWidget";
+import StoreMockup from "./StoreMockup";
+import PreviewModal from "./PreviewModal";
+import { useStoreGlobalContext } from "@/context/StoreGlobalContext";
 
 interface StorePageInfoProps {
   store: Store;
 }
 
 export default function StorePageInfoFrom({ store }: StorePageInfoProps) {
+  const [isMobileView, setIsMobileView] = useState(false);
+  const mockupIframeRef = useRef<HTMLIFrameElement>(null);
   const router = useRouter();
+  const { currencies } = useCurrency();
   const [storeData, setStoreData] = useState<
     Store & { foodCategory?: FoodCategory[]; foods?: Food[] }
   >(store);
   const [isSaving, setIsSaving] = useState(false);
+  const { showPreview, setShowPreview } = useStoreGlobalContext();
 
   function handleStoreDataChange(name: string, val: string) {
     setStoreData((old) => {
@@ -23,29 +40,98 @@ export default function StorePageInfoFrom({ store }: StorePageInfoProps) {
     });
   }
 
-  async function updateStoreHandler(e: FormEvent) {
-    e.preventDefault();
+  async function updateRequest(newData?: Partial<Food>) {
     const { id, createdAt, foodCategory, foods, updatedAt, ...changes } =
       storeData;
-    setIsSaving(true);
-    const response = await fetch(`/api/stores/${store.id}`, {
+    const res = await fetch(`/api/stores/${store.id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(changes),
+      body: JSON.stringify({ ...changes, ...newData }),
     });
-    if (!response?.ok) {
+
+    if (!res?.ok) {
       //TODO: add toast message here
       window.alert("Something went wrong");
     }
-    setIsSaving(false);
-    router.refresh();
   }
+
+  async function updateStoreHandler(e: FormEvent) {
+    e.preventDefault();
+    const { id, createdAt, foodCategory, foods, updatedAt, ...changes } =
+      storeData;
+    try {
+      setIsSaving(true);
+      await updateRequest();
+      setIsSaving(false);
+      router.refresh();
+      console.log(mockupIframeRef.current);
+      if (mockupIframeRef.current) {
+        mockupIframeRef.current.src = mockupIframeRef.current?.src;
+      }
+    } catch (e) {
+      console.log(e);
+      //TODO: add toast message here
+      window.alert("Something went wrong");
+    }
+  }
+
+  const checkForMobileWidth = useCallback((e: UIEvent) => {
+    const window = e.target as Window;
+    if (window.innerWidth < 769) {
+      setIsMobileView(true);
+    } else {
+      setIsMobileView(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("resize", checkForMobileWidth);
+    return () => {
+      window.removeEventListener("resize", checkForMobileWidth);
+    };
+  }, []);
 
   return (
     <div className="w-full flex">
       <form className="flex-1" onSubmit={updateStoreHandler}>
+        <div className="w-full h-[200px] rounded-lg bg-slate-200 mb-3 flex items-center justify-center overflow-hidden">
+          {storeData.image && storeData.image !== "" && (
+            <img
+              src={storeData.image}
+              className="min-w-full min-h-full object-cover"
+            />
+          )}
+          {(!storeData.image || storeData.image === "") && (
+            <MdFastfood className="text-5xl" />
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <UploadWidget
+            imageName={storeData.id + "-cover"}
+            onUploadComplete={async (url: string) => {
+              console.log(url);
+              setStoreData((prev) => {
+                return { ...prev, image: url };
+              });
+              await updateRequest({ image: url });
+            }}
+            options={{ folder: "qrmenus_store_covers" }}
+          />
+          <button
+            onClick={async () => {
+              setStoreData((prev) => {
+                return { ...prev, image: "" };
+              });
+              await updateRequest({ image: "" });
+            }}
+            className="btn"
+            type="button"
+          >
+            Remove Image
+          </button>
+        </div>
         <InputGroup
           label="Store Name"
           value={storeData.name}
@@ -85,10 +171,10 @@ export default function StorePageInfoFrom({ store }: StorePageInfoProps) {
           <label className="label">
             <span className="label-text">Currency</span>
           </label>
-          <label className="input-group flex">
-            <span>$</span>
+          <div className="input-group flex max-w-full">
+            <span>{storeData.currency}</span>
             <select
-              className="select select-bordered flex-1"
+              className="select select-bordered flex-1 max-w-[200px] sm:max-w-full"
               value={storeData.currency || "EUR"}
               onChange={(e: SyntheticEvent) => {
                 const select = e.target as HTMLSelectElement;
@@ -97,10 +183,15 @@ export default function StorePageInfoFrom({ store }: StorePageInfoProps) {
                 });
               }}
             >
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
+              {currencies.map((currency) => {
+                return (
+                  <option value={currency.short} key={currency.short}>
+                    {currency.long}
+                  </option>
+                );
+              })}
             </select>
-          </label>
+          </div>
         </div>
         <div>
           <ButtonOutline isLoading={isSaving} className="w-full" type="submit">
@@ -109,15 +200,13 @@ export default function StorePageInfoFrom({ store }: StorePageInfoProps) {
         </div>
       </form>
       <div className="flex-1 h-full items-center justify-center pt-8 hidden md:flex ">
-        <div className="mockup-phone">
-          <div className="camera"></div>
-          <div className="display">
-            <div className="artboard artboard-demo phone-1">
-              <div className="h-full w-full"></div>
-            </div>
-          </div>
-        </div>
+        <StoreMockup storeId={store.id} iframeRef={mockupIframeRef} />
       </div>
+      <PreviewModal
+        storeId={store.id}
+        isOpen={isMobileView && showPreview}
+        onClose={() => setShowPreview(false)}
+      />
     </div>
   );
 }

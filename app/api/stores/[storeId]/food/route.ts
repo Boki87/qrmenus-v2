@@ -48,7 +48,7 @@ const postFoodParser = z.object({
   image: z.string().optional(),
   description: z.string().optional(),
   comments: z.string().optional(),
-  price: z.number().optional(),
+  price: z.string().optional(),
   size: z.number().optional(),
   sizeUnit: z.string().optional(),
   prepTime: z.number().optional(),

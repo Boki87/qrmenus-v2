@@ -14,6 +14,8 @@ import { BsClockHistory } from "react-icons/bs";
 import { IoScaleOutline } from "react-icons/io5";
 import useImageWidget from "@/lib/useImageWidget";
 import { MdFastfood } from "react-icons/md";
+import UploadWidget from "../UploadWidget";
+import { getImageNameWithoutExtension } from "@/lib/utils";
 
 interface FoodsListModalProps {
   isOpen: boolean;
@@ -41,12 +43,13 @@ export default function FoodListModal({
   const { openWidget } = useImageWidget();
   const [isLoadingFood, setIsLoadingFood] = useState(false);
   const [isAddingFood, setIsAddingFood] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [food, setFood] = useState<FoodType>({
     name: "",
     image: "",
     description: "",
     comments: "",
-    price: 0,
+    price: "0",
     size: 100,
     sizeUnit: "g",
     prepTime: 0,
@@ -147,11 +150,10 @@ export default function FoodListModal({
     }
   }
 
-  function imageUploadHandler(url: string) {
-    setFood((prev) => {
-      return { ...prev, image: url };
-    });
-  }
+  const imageName =
+    food.image && food.image !== ""
+      ? getImageNameWithoutExtension(food.image)
+      : food.storeId + "-" + +new Date();
 
   useEffect(() => {
     if (!foodId || foodId === "") {
@@ -208,13 +210,23 @@ export default function FoodListModal({
                 />
               )}
             </div>
-            <button
+            {/* <button
               type="button"
               onClick={() => openWidget(imageUploadHandler)}
               className="btn"
             >
               Upload Image
-            </button>
+            </button> */}
+            <UploadWidget
+              imageName={imageName}
+              onUploadComplete={(imageUrl: string) => {
+                setFood((prev) => {
+                  return { ...prev, image: imageUrl };
+                });
+              }}
+              isUploading={(val: boolean) => setIsUploadingImage(val)}
+              options={{ folder: "qrmenus_items", upload_preset: "hqqssfr6" }}
+            />
             <button
               onClick={() =>
                 setFood((prev) => {
@@ -250,8 +262,8 @@ export default function FoodListModal({
             />
             <InputGroup
               name="price"
-              type="number"
-              val={food.price || 0}
+              type="text"
+              val={food.price || "0"}
               onInput={foodInputHandler}
               leftElement={<span>{currency}</span>}
               label="Price"

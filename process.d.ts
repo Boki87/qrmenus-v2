@@ -6,5 +6,7 @@ declare namespace NodeJS {
     DATABASE_URL: string;
     GOOGLE_ID: string;
     GOOGLE_SECRET: string;
+    CLOUDINARY_API_SECRET: string;
+    CLOUDINARY_API_KEY: string;
   }
 }

@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import StorePageNav from "@/components/store-page-nav";
+import StoreGlobalProvider from "@/context/StoreGlobalContext";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -12,8 +13,10 @@ export default async function DashboardLayout({
 }: DashboardLayoutProps) {
   return (
     <div className="w-full">
-      <StorePageNav storeId={params.storeId} />
-      {children}
+      <StoreGlobalProvider>
+        <StorePageNav storeId={params.storeId} />
+        {children}
+      </StoreGlobalProvider>
     </div>
   );
 }
